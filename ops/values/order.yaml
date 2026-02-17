@@ -1,0 +1,7 @@
+image:
+  repository: docker.io/library/order-service
+  tag: "latest"
+  pullPolicy: Never
+
+service:
+  targetPort: 8000

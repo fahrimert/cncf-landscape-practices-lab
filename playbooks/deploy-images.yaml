@@ -1,0 +1,68 @@
+---
+- name: Mikroservis İmajlarını Build Et (Hızlı & Smart Sync)
+  hosts: k3s_nodes
+  become: yes
+  vars:
+    services:
+      - name: order-service
+        path: ../apps/order-service
+      - name: inventory-service
+        path: ../apps/inventory-service
+      - name: payment-service
+        path: ../apps/payment-service
+
+  tasks:
+    - name: 1. Uzak sunucuda klasörleri temizle/hazırla
+      file:
+        path: "/opt/microservices/{{ item.name }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ services }}"
+
+    - name: 2. Yerelde paketle (node_modules HARİÇ)
+      shell: |
+        tar --exclude='node_modules' --exclude='.git' --exclude='__pycache__' --exclude='.venv' -czf /tmp/{{ item.name }}.tar.gz -C "{{ playbook_dir }}/{{ item.path }}" .
+      delegate_to: localhost
+      become: no
+      loop: "{{ services }}"
+
+    - name: 3. Arşivi karşıya yükle ve aç
+      unarchive:
+        src: "/tmp/{{ item.name }}.tar.gz"
+        dest: "/opt/microservices/{{ item.name }}"
+      loop: "{{ services }}"
+
+    - name: 4. Docker Image Build
+      shell: |
+        docker build -t {{ item.name }}:latest .
+      args:
+        chdir: "/opt/microservices/{{ item.name }}"
+      loop: "{{ services }}"
+
+    - name: 5. İmajları .tar olarak kaydet (K3s transferi için)
+      shell: |
+        docker save {{ item.name }}:latest -o {{ item.name }}.tar
+      args:
+        chdir: "/opt/microservices/{{ item.name }}"
+      loop: "{{ services }}"
+
+    - name: 6. İmajları K3s içine import et
+      shell: |
+        k3s ctr images import {{ item.name }}.tar
+      args:
+        chdir: "/opt/microservices/{{ item.name }}"
+      loop: "{{ services }}"
+
+    - name: 7. Temizlik (Geçici dosyaları sil)
+      file:
+        path: "/opt/microservices/{{ item.name }}/{{ item.name }}.tar"
+        state: absent
+      loop: "{{ services }}"
+
+    - name: 8. Yerel temizlik
+      file:
+        path: "/tmp/{{ item.name }}.tar.gz"
+        state: absent
+      delegate_to: localhost
+      become: no
+      loop: "{{ services }}"
