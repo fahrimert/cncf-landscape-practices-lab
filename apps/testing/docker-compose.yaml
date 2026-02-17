@@ -31,6 +31,29 @@ services:
       - "6379:6379"
     networks:
       - dapr-net
+  inventory-service:
+    build: ../inventory-service
+    ports:
+      - "6000:6000"
+      - "3501:3501"
+    networks:
+      - dapr-net
+    depends_on:
+      - redis
 
+  inventory-service-dapr:
+    image: "daprio/daprd:1.12.0"
+    command: [
+      "./daprd",
+      "-app-id", "inventory-service",
+      "-app-port", "6000",
+      "-dapr-http-port", "3501",
+      "-components-path", "/components"
+    ]
+    volumes:
+      - ./components:/components
+    network_mode: "service:inventory-service"
+    depends_on:
+      - inventory-service
 networks:
   dapr-net:
