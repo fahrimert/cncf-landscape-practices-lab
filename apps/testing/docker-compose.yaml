@@ -55,5 +55,29 @@ services:
     network_mode: "service:inventory-service"
     depends_on:
       - inventory-service
+  payment-service:
+    build: ../payment-service
+    ports:
+      - "5000:5000"
+      - "3502:3502"
+    networks:
+      - dapr-net
+    depends_on:
+      - redis
+
+  payment-service-dapr:
+    image: "daprio/daprd:1.12.0"
+    command: [
+      "./daprd",
+      "-app-id", "payment-service",
+      "-app-port", "5000",
+      "-dapr-http-port", "3502",
+      "-components-path", "/components"
+    ]
+    volumes:
+      - ./components:/components
+    network_mode: "service:payment-service"
+    depends_on:
+      - payment-service
 networks:
   dapr-net:
