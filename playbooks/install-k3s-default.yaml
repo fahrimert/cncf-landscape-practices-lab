@@ -1,0 +1,31 @@
+---
+- name: K3s Kurulumu
+  hosts: k3s_nodes
+  become: yes
+  tasks:
+    - name: K3s yükleme scriptini indir ve çalıştır
+      shell: curl -sfL https://get.k3s.io | sh -s - server --tls-san 192.168.56.10
+    - name: Kubeconfig izinlerini ayarla (okuma izni)
+      file:
+        path: /etc/rancher/k3s/k3s.yaml
+        mode: '0644'
+
+    - name: Kubeconfig dosyasını host makineye çek
+      fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: ../k3s.yaml
+        flat: yes
+
+- name: Local Kubeconfig Ayarı
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: python3
+  tasks:
+    - name: IP adresini düzelt (127.0.0.1 -> 192.168.56.10)
+      replace:
+        path: ../k3s.yaml
+        regexp: '127.0.0.1'
+        replace: '192.168.56.10'
+
+

@@ -1,0 +1,28 @@
+- name: Sistem Hazırlığı
+  hosts: k3s_nodes
+  become: yes
+  tasks:
+    - name: DNS ayarlarını 8.8.8.8 olarak sabitle
+      shell: |
+        rm -f /etc/resolv.conf
+        echo "nameserver 8.8.8.8" > /etc/resolv.conf
+        echo "nameserver 1.1.1.1" >> /etc/resolv.conf
+      tags: dns_fix
+    - name: Paket listesini güncelle ve gerekli araçları kur
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - htop
+          - docker.io  
+        state: present
+        update_cache: yes
+
+    - name: Docker servisini başlat ve enable et
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+

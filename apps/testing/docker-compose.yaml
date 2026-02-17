@@ -1,0 +1,36 @@
+version: '3'
+services:
+  order-service:
+    build: ../order-service
+    ports:
+      - "8000:8000"
+      - "9090:9090"
+    networks:
+      - dapr-net
+    depends_on:
+      - redis
+
+  order-service-dapr:
+    image: "daprio/daprd:1.12.0"  
+    command: [
+      "./daprd",
+      "-app-id", "order-service",
+      "-app-port", "8000",
+      "-dapr-http-port", "3500",
+      "-components-path", "/components"
+    ]
+    volumes:
+      - ./components:/components
+    network_mode: "service:order-service"
+    depends_on:
+      - order-service
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    networks:
+      - dapr-net
+
+networks:
+  dapr-net:
