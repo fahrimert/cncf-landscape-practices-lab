@@ -1,9 +1,21 @@
 ---
-- name: K3s Kurulumu (CNCF Landscape Stack Uyumu)
+- name: Katman 0 - K3s Temizliği (Yıkım)
   hosts: k3s_nodes
   become: yes
   tasks:
-    - name: K3s yükleme scriptini indir ve çalıştır
+    - name: K3s uninstall scriptini çalıştır (Eğer kuruluysa)
+      shell: /usr/local/bin/k3s-uninstall.sh
+      ignore_errors: yes
+
+    - name: Eski K3s ve Kubernetes artıklarını tamamen sil
+      shell: rm -rf /etc/rancher /var/lib/rancher /var/lib/kubelet /var/lib/cni /etc/cni
+      ignore_errors: yes
+
+- name: Katman 0 - Çıplak K3s Kurulumu
+  hosts: k3s_nodes
+  become: yes
+  tasks:
+    - name: K3s yükleme scriptini indir ve CNI olmadan çalıştır
       shell: >
         curl -sfL https://get.k3s.io | sh -s - server 
         --tls-san 192.168.56.10 
