@@ -3,3 +3,4 @@ node_modules/
 **/.vagrant/
 dist/
 .env
+**/.k3s.yaml/
