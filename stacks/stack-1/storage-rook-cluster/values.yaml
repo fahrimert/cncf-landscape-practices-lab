@@ -1,0 +1,28 @@
+rook-ceph-cluster:
+  toolbox:
+    enabled: true
+  
+  cephFileSystems: []
+  cephObjectStores: []
+  cephClusterSpec:
+    dataDirHostPath: "/var/lib/rook"
+    mon:
+      count: 1
+      allowMultiplePerNode: true
+    mgr:
+      count: 1
+      allowMultiplePerNode: true
+    storage:
+      useAllNodes: true
+      useAllDevices: true
+    
+  cephBlockPools:
+    - name: ceph-blockpool
+      spec:
+        failureDomain: host
+        replicated:
+          size: 1
+      storageClass:
+        enabled: true
+        name: rook-ceph-block
+        isDefault: true

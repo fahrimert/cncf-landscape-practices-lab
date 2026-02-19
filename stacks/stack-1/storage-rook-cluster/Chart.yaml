@@ -1,0 +1,9 @@
+apiVersion: v2
+name: stack1-storage-rook-cluster
+description: Layer 1B - The actual Ceph Cluster providing distributed storage
+type: application
+version: 1.0.0
+dependencies:
+  - name: rook-ceph-cluster
+    version: "v1.13.7"
+    repository: "https://charts.rook.io/release"

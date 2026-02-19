@@ -1,0 +1,9 @@
+apiVersion: v2
+name: stack1-storage-rook
+description: Layer 1A - Cloud Native Storage Operator using Rook-Ceph
+type: application
+version: 1.0.0
+dependencies:
+  - name: rook-ceph
+    version: "v1.13.7"
+    repository: "https://charts.rook.io/release"
