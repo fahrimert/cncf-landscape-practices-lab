@@ -1,0 +1,12 @@
+driver:
+  kind: modern_ebpf
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 10Mi
+  limits:
+    memory: 512Mi
+
+tty: true
+json_output: true
