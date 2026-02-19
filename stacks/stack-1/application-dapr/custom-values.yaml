@@ -1,0 +1,27 @@
+global:
+  ha:
+    enabled: false # Laboratuvar ortamı için tek kopya yeterli
+
+dapr_operator:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      memory: 256Mi
+
+dapr_placement:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      memory: 256Mi
+
+dapr_sidecar_injector:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 10Mi
+    limits:
+      memory: 256Mi
