@@ -1,0 +1,21 @@
+mode: daemonset
+image:
+  repository: "otel/opentelemetry-collector-contrib"
+resources:
+  requests:
+    cpu: 10m
+    memory: 10Mi
+  limits:
+    memory: 256Mi
+config:
+  exporters:
+    otlp:
+      endpoint: "jaeger-collector.observability.svc.cluster.local:4317"
+      tls:
+        insecure: true
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp, jaeger, zipkin]
+        processors: [batch]
+        exporters: [otlp]
