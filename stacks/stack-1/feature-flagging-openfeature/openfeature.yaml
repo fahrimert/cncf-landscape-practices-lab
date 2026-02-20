@@ -10,7 +10,7 @@ metadata:
   namespace: openfeature-system
 spec:
   interval: 1h
-  url: https://open-feature.github.io/openfeature-operator/
+  url: https://open-feature.github.io/open-feature-operator/
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
@@ -21,7 +21,7 @@ spec:
   interval: 5m
   chart:
     spec:
-      chart: openfeature-operator
+      chart: open-feature-operator
       version: ">=0.2.0"
       sourceRef:
         kind: HelmRepository
