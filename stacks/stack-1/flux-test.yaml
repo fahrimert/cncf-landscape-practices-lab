@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flux-gitops-test
+  namespace: default
+data:
+  status: "Sistem Otonom!"
+  message: "Merhaba Mert, eger bunu okuyorsan ben (Flux) Git reponu izliyor ve K3s'i yonetiyorum demektir."
