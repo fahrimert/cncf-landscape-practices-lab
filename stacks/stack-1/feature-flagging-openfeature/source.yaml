@@ -1,0 +1,9 @@
+apiVersion: core.openfeature.dev/v1beta1
+kind: FeatureFlagSource
+metadata:
+  name: platform-flags
+  namespace: default
+spec:
+  sources:
+    - provider: kubernetes
+      source: default/platform-flags # Bu, bir önceki adımda kurduğumuz FeatureFlag'i işaret ediyor!
