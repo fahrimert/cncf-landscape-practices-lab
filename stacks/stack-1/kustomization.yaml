@@ -6,3 +6,4 @@ resources:
   - container-registry-dragonfly/dragonfly.yaml
   - feature-flagging-openfeature/openfeature.yaml
   - security-cert-manager/cert-manager.yaml
+  - feature-flagging-openfeature/flags.yaml
