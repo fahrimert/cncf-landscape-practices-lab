@@ -1,10 +1,10 @@
 apiVersion: core.openfeature.dev/v1beta1
-kind: FeatureFlagConfiguration
+kind: FeatureFlag
 metadata:
   name: platform-flags
   namespace: default
 spec:
-  featureFlagSpec:
+  flagSpec:
     flags:
       fast-delivery:
         state: "ENABLED"
