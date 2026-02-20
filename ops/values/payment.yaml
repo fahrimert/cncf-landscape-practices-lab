@@ -1,7 +1,15 @@
 image:
   repository: docker.io/library/payment-service
-  tag: "latest"
-  pullPolicy: Never
-
+  pullPolicy: IfNotPresent
 service:
   targetPort: 5000
+podAnnotations:
+  dapr.io/enabled: "true"
+  dapr.io/app-id: "payment-service"
+  dapr.io/app-port: "5000"
+  sidecar.istio.io/proxyCPU: "10m"
+  sidecar.istio.io/proxyMemory: "10Mi"
+resources:
+  requests:
+    cpu: 10m
+    memory: 10Mi

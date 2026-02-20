@@ -15,6 +15,27 @@ rook-ceph-cluster:
     storage:
       useAllNodes: true
       useAllDevices: true
+    resources:
+    mgr:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+    mon:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+    osd:
+      requests:
+        cpu: "50m"
+        memory: "256Mi"
+    prepareosd:
+      requests:
+        cpu: "50m"
+        memory: "50Mi"
+    crashcollector:
+      requests:
+        cpu: "10m"
+        memory: "10Mi"
     
   cephBlockPools:
     - name: ceph-blockpool
