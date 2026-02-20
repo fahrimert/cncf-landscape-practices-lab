@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dragonfly-system
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: dragonfly-repo
+  namespace: dragonfly-system
+spec:
+  interval: 1h
+  url: https://dragonflyoss.github.io/helm-charts/
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: dragonfly
+  namespace: dragonfly-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: dragonfly
+      version: ">=1.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: dragonfly-repo
+  values:
+    manager:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    scheduler:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+    seedPeer:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+    dfdaemon:
+      hostNetwork: true
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
