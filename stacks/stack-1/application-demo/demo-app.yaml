@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+      annotations:
+        # İşte sihir burası: OpenFeature ajanı bu pod'a sızsın!
+        openfeature.dev/enabled: "true"
+        # Ajan, az önce oluşturduğumuz bu bayrakları okusun:
+        openfeature.dev/featureflagsource: "platform-flags"
+    spec:
+      containers:
+        - name: app
+          image: alpine:latest
+          command: ["/bin/sh", "-c", "while true; do sleep 3600; done"]

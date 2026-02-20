@@ -7,3 +7,4 @@ resources:
   - feature-flagging-openfeature/openfeature.yaml
   - security-cert-manager/cert-manager.yaml
   - feature-flagging-openfeature/flags.yaml
+  - application-demo/demo-app.yaml
