@@ -10,3 +10,4 @@ resources:
   - application-demo/demo-app.yaml
   - feature-flagging-openfeature/source.yaml
   - observability-clickhouse/clickhouse.yaml
+  - ecommerce-components/dapr-tracing.yaml
