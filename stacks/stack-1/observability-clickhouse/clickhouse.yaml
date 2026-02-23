@@ -1,0 +1,40 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: bitnami-repo
+  namespace: observability
+spec:
+  interval: 1h
+  url: https://charts.bitnami.com/bitnami
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: clickhouse
+  namespace: observability
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: clickhouse
+      version: ">=4.0.0"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami-repo
+  values:
+    auth:
+      password: "clickhouse_admin"
+    shards: 1
+    replicaCount: 1
+    zookeeper:
+      enabled: false # Tek node olduğumuz için kapattık
+    persistence:
+      enabled: true
+      storageClass: "rook-ceph-block"
+      size: 5Gi
+    resources:
+      requests:
+        cpu: 10m
+        memory: 10Mi
+      limits:
+        memory: 512Mi

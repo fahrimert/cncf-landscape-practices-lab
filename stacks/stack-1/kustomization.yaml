@@ -9,3 +9,5 @@ resources:
   - feature-flagging-openfeature/flags.yaml
   - application-demo/demo-app.yaml
   - feature-flagging-openfeature/source.yaml
+  - observability-clickhouse/clickhouse.yaml
+  - finops-opencost/opencost.yaml
