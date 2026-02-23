@@ -31,14 +31,10 @@ spec:
       exporter:
         defaultClusterId: "k3s-cncf-lab"
       prometheus:
+        internal:
+          enabled: false   # İŞTE EKSİK OLAN SİHİRLİ KELİME!
         external:
-          # VictoriaMetrics ile muazzam entegrasyon noktamız!
+          enabled: true    # HARİCİ URL'Yİ AKTİF ET!
           url: "http://vmetrics-victoria-metrics-single-server.observability.svc.cluster.local:8428"
     ui:
       enabled: true
-    resources:
-      requests:
-        cpu: 10m
-        memory: 10Mi
-      limits:
-        memory: 256Mi
