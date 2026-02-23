@@ -26,15 +26,14 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: opencost-repo
-  values:
+values:
     opencost:
       exporter:
         defaultClusterId: "k3s-cncf-lab"
       prometheus:
         internal:
-          enabled: false   # İŞTE EKSİK OLAN SİHİRLİ KELİME!
+          enabled: true    # KENDI İÇİNDEKİ HAFİF PROMETHEUS'U AÇTIK
         external:
-          enabled: true    # HARİCİ URL'Yİ AKTİF ET!
-          url: "http://vmetrics-victoria-metrics-single-server.observability.svc.cluster.local:8428"
+          enabled: false   # VICTORIAMETRICS'I İPTAL ETTİK
     ui:
       enabled: true
