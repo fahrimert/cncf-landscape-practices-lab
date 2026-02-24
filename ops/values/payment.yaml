@@ -7,6 +7,7 @@ podAnnotations:
   dapr.io/enabled: "true"
   dapr.io/app-id: "payment-service"
   dapr.io/app-port: "5000"
+  dapr.io/config: "app-tracing-config"
   sidecar.istio.io/proxyCPU: "10m"
   sidecar.istio.io/proxyMemory: "10Mi"
 resources:

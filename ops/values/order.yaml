@@ -7,6 +7,10 @@ podAnnotations:
   dapr.io/enabled: "true"
   dapr.io/app-id: "order-service"
   dapr.io/app-port: "8000"
+  dapr.io/config: "app-tracing-config"
+  openfeature.dev/enabled: "true"
+  openfeature.dev/featureflagsource: "platform-flags"
+  traffic.sidecar.istio.io/excludeInboundPorts: "8013,8014"
   sidecar.istio.io/proxyCPU: "10m"
   sidecar.istio.io/proxyMemory: "10Mi"
 resources:

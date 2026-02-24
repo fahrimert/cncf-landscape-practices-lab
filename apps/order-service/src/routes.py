@@ -8,6 +8,12 @@ from datetime import datetime
 import asyncio
 import random
 
+from openfeature import api
+from openfeature.contrib.provider.flagd import FlagdProvider
+
+api.set_provider(FlagdProvider())
+feature_client = api.get_client()
+
 order_bp = Blueprint("orders", url_prefix="/api/v1/orders")
 
 STATE_STORE_NAME = "statestore"
@@ -18,6 +24,8 @@ async def create_order(request):
     try:
         order_in = OrderCreate(**request.json)
         
+        is_fast_delivery = feature_client.get_boolean_value("fast-delivery", False)
+
         order_id = str(uuid.uuid4())
         order_data = {
             "order_id": order_id,
@@ -25,7 +33,12 @@ async def create_order(request):
             "created_at": datetime.utcnow().isoformat(),
             **order_in.model_dump()
         }
+        order_data["fast_delivery"] = is_fast_delivery
 
+        if is_fast_delivery:
+            print(f"🚀 [SIPARIS {order_id}] HIZLI TESLIMAT AKTIF! Özel kurye atandı.")
+        else:
+            print(f"🐢 [SIPARIS {order_id}] STANDART TESLIMAT. Normal sıraya alındı.")
         with DaprClient() as d:
             d.save_state(
                 store_name=STATE_STORE_NAME,

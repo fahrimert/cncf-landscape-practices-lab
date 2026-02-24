@@ -6,3 +6,5 @@ opentelemetry-sdk
 pydantic>=2.0.0
 requests
 aiohttp
+openfeature-sdk
+openfeature-provider-flagd

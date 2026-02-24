@@ -1,8 +1,8 @@
 # CNCF Landscape Practices Lab 
 
-Bu depo, Cloud Native Computing Foundation (CNCF) ekosistemindeki en güçlü ve modern araçları bir araya getirerek, Production-Grade bir Kubernetes platform mimarisi inşa etme laboratuvarıdır.
+Bu depo, Cloud Native Computing Foundation  ekosistemindeki en güçlü ve modern araçları bir araya getirerek, Production-Grade bir Kubernetes platform mimarisi inşa etme laboratuvarıdır.
 
-Amacımız, standart ve basit kurulumların ötesine geçerek; ağ , depolama , güvenlik , gözlemlenebilirlik  ve uygulama teslimatı  süreçlerini sektör standartlarında, birbirleriyle entegre bir şekilde tasarlamak ve test etmektir.
+Amacımız, standart ve basit kurulumların ötesine geçerek; ağ , depolama , güvenlik , gözlemlenebilirlik ve uygulama teslimatı süreçlerini sektör standartlarında, birbirleriyle entegre bir şekilde tasarlamak ve test etmektir.
 
 ## Katmanlı İnşaat Yol Haritası
 
@@ -25,7 +25,7 @@ Sektörde sıkça yapılan bir hata, Kubernetes'i varsayılan ağ eklentileriyle
 
 ## Başlangıç Rehberi (Getting Started)
 
-Laboratuvarı yerel ortamınızda (örn. Vagrant) ayağa kaldırmak için aşağıdaki adımları sırasıyla uygulayın:
+Laboratuvarı yerel ortamınızda ayağa kaldırmak için aşağıdaki adımları sırasıyla uygulayın:
 
 ### 1. K3s Temizliği ve Çıplak Kurulum (Layer 0)
 
@@ -37,7 +37,7 @@ ansible-playbook -i playbooks/inventory.ini playbooks/stack-1-custom-playbooks/r
 
 Not: İşlem sonrasında kubectl get nodes komutu NotReady statüsü vermelidir.
 
-### Katman 2: Bulut Yerel Depolama (Cloud Native Storage - Rook & Ceph)
+### Katman 2: Bulut Yerel Depolama  Rook & Ceph
 
 Kubernetes üzerinde durum bilgisi tutan uygulamalar ve veritabanları çalıştırabilmek için sağlam bir depolama altyapısına ihtiyaç vardır. Bu laboratuvarda, endüstri standardı olan dağıtık depolama sistemi Ceph'i, Kubernetes'e özgü bir operatör olan Rook ile yönetiyoruz.
 
@@ -60,14 +60,16 @@ Değişiklik sonrası vagrant reload veya vagrant up ile makineyi başlatın.
 Önce Ceph kümesini yönetecek olan operatörü kuruyoruz.
 
 ```bash
-helm dependency update ./stacks/stack-1/storage-rook/
+KUBECONFIG=./k3s.yaml  helm dependency update ./stacks/stack-1/storage-rook/
+```
 
-helm install rook-operator ./stacks/stack-1/storage-rook/ \
+```bash
+KUBECONFIG=./k3s.yaml  helm install rook-operator ./stacks/stack-1/storage-rook/ \
   --namespace rook-ceph \
   --create-namespace
 ```
 
-**Not:** `kubectl get pods -n rook-ceph` ile `rook-ceph-operator` podunun `Running` olmasını bekleyin.
+**Not:** `KUBECONFIG=./k3s.yaml  kubectl get pods -n rook-ceph` ile `rook-ceph-operator` podunun `Running` olmasını bekleyin.
 
 ### 2. Ceph Cluster'ın İnşası
 
@@ -75,23 +77,26 @@ Laboratuvar ortamını yormamak adına gereksiz dosya sistemlerini kapattığım
 
 ## Kurulumu Başlatın
 ```bash
-helm dependency update ./stacks/stack-1/storage-rook-cluster/
-helm install rook-cluster ./stacks/stack-1/storage-rook-cluster/ --namespace rook-ceph
+KUBECONFIG=./k3s.yaml helm dependency update ./stacks/stack-1/storage-rook-cluster/
 ```
 
-### 3. Doğrulama ve Canlı İzleme
+```bash
+KUBECONFIG=./k3s.yaml helm install rook-cluster ./stacks/stack-1/storage-rook-cluster/ --namespace rook-ceph
+```
+
+### 3. Doğrulama
 
 Kurulum tetiklendikten sonra sistem sırasıyla disk bağlayıcıları (csi), gözcüleri (mon), yöneticileri (mgr) ve en son veriyi yazacak işçiyi (osd) ayağa kaldırır.
 
 Durumu canlı izlemek için:
 
 ```bash
-kubectl get pods -n rook-ceph -w
+KUBECONFIG=./k3s.yaml kubectl get pods -n rook-ceph -w
 ```
 Listede rook-ceph-osd-0-... isimli podun Running durumuna geçtiğini gördüğünüzde kurulum başarıyla tamamlanmış demektir.
 
 ```bash
-kubectl exec -it deploy/rook-ceph-tools -n rook-ceph -- ceph status
+KUBECONFIG=./k3s.yaml kubectl exec -it deploy/rook-ceph-tools -n rook-ceph -- ceph status
 # Çıktıda "osd: 1 osds: 1 up, 1 in" ibaresi diskin sağlıklı entegre olduğunu gösterir.
 ```
 
@@ -102,77 +107,32 @@ Projemizin kalıcı veri (stateful) ihtiyacı için, YouTube ve Slack gibi devle
 **Önemli Not:** Local K3s  ortamındaki kaynak kısıtlamalarına (Insufficient CPU hatalarına) takılmamak için, Vitess bileşenlerinin varsayılan CPU talepleri (`requests: cpu: 100m`), kağıt üzerinde sistemi boğmaması adına `10m` olarak optimize edilmiştir.
 
 
-### 1. Vitess Klasörünün ve Operatörün Hazırlanması
 
-Öncelikle Vitess mimarisi için gerekli dizini oluşturup, resmi operatör (yönetici) dosyasını indiriyoruz:
-Bash
-
-```bash
-mkdir -p stacks/stack-1/database-vitess
-
-wget https://raw.githubusercontent.com/vitessio/vitess/release-19.0/examples/operator/operator.yaml -O stacks/stack-1/database-vitess/operator.yaml
-```
-
-### 2. Optimize Edilmiş Veritabanı Kümesi  Konfigürasyonu
+### 1. Optimize Edilmiş Veritabanı Kümesi  Konfigürasyonu
 
 Buradaki `stacks/stack-1/database-vitess/101_initial_cluster.yaml` bu dosya, CPU tüketimi laboratuvar ortamına göre optimize edilmiş ve `rook-ceph-block` disk sağlayıcısına bağlanmış hazır versiyondur.
 
-### 3. Kurulumu Başlatma
+### 2. Kurulumu Başlatma
 
 Konfigürasyonları Kubernetes kümesine uyguluyoruz:
 
 ```bash
-kubectl create namespace vitess
+KUBECONFIG=./k3s.yaml kubectl create namespace vitess
 ```
 
 ```bash
-kubectl apply -f stacks/stack-1/database-vitess/operator.yaml -n vitess
+KUBECONFIG=./k3s.yaml kubectl apply -f stacks/stack-1/database-vitess/operator.yaml -n vitess
 ```
 
 ```bash
-kubectl apply -f stacks/stack-1/database-vitess/101_initial_cluster.yaml -n vitess
+KUBECONFIG=./k3s.yaml kubectl apply -f stacks/stack-1/database-vitess/101_initial_cluster.yaml -n vitess
 ```
 
 Podların ayağa kalkmasını izlemek için:
 
 ```bash
-kubectl get pods -n vitess -w
+KUBECONFIG=./k3s.yaml kubectl get pods -n vitess -w
 ```
-
-Tüm podlar (özellikle vttablet işçileri) Running statüsüne geçene kadar bekleyin.
-
-### 4. Test ve Kullanım (Erişim)
-
-Vitess kurulumu tamamlandığında arayüze ve veritabanına erişmek için port-forwarding (tünelleme) işlemlerini başlatın. (Öncelikle servis isimlerini `kubectl get svc -n vitess` ile teyit edin):
-
-**A) Görsel Yönetim Paneline (vtctld) Bağlanma:**
-
-```bash
-kubectl port-forward svc/example-vtctld-XXXXXXXX 15000:15000 -n vitess
-```
-
-Tarayıcıdan `http://localhost:15000` adresine giderek cluster topolojisini görebilirsiniz.
-
-**B) Veritabanına (MySQL) Bağlanma ve Veri Yazma:**
-
-Diğer bir terminalde `vtgate` servisini (MySQL giriş kapısı) dışarı açın:
-
-```bash
-kubectl port-forward svc/example-vtgate-XXXXXXXX 3306:3306 -n vitess
-```
-
-Artık standart bir MySQL istemcisi ile şifresiz olarak doğrudan bağlanıp test edebilirsiniz:
-
-```bash
-mysql -h 127.0.0.1 -P 3306 -u user
-```
-
-Örnek SQL Testi:
-
-USE commerce;
-CREATE TABLE users (id INT, name VARCHAR(50), PRIMARY KEY(id));
-INSERT INTO users (id, name) VALUES (1, 'TestUser');
-SELECT * FROM users;
 
 ### Katman 4: Service Mesh ve Ağ Güvenliği 
 
@@ -185,32 +145,27 @@ Aşağıdaki adımları sırasıyla uygulayarak Istio Control Plane ve Ingress G
 Öncelikle Istio'nun resmi Helm paketlerini sisteme tanıtın:
 
 ```bash
-helm repo add istio [https://istio-release.storage.googleapis.com/charts](https://istio-release.storage.googleapis.com/charts)
-helm repo update
+KUBECONFIG=./k3s.yaml helm repo add istio [https://istio-release.storage.googleapis.com/charts](https://istio-release.storage.googleapis.com/charts)
 ```
 
-### 2. Istio Control Plane (Beyin) Kurulumu
+```bash
+KUBECONFIG=./k3s.yaml helm repo update
+```
+
+### 2. Istio Control Plane Kurulumu
 
 Istio'nun temel kaynaklarını (CRD) ve asıl yönetici beyni olan `istiod` bileşenini izole bir alana (namespace) kuruyoruz:
 
 ```bash
-kubectl create namespace istio-system
-
-helm install istio-base istio/base -n istio-system --set defaultRevision=default
-
-helm install istiod istio/istiod -n istio-system --wait
-```
-
-### 3. Dış Kapının (Ingress Gateway) İnşa Edilmesi
-
-Uygulamalarımıza dışarıdan erişebilmek için giriş kapısını (Ingress Gateway) güvenlik pratikleri gereği ayrı bir namespace içerisinde ayağa kaldırıyoruz:
-
-```bash
-kubectl create namespace istio-ingress
+KUBECONFIG=./k3s.yaml kubectl create namespace istio-system
 ```
 
 ```bash
-helm install istio-ingressgateway istio/gateway -n istio-ingress --wait
+KUBECONFIG=./k3s.yaml helm install istio-base istio/base -n istio-system --set defaultRevision=default
+```
+
+```bash
+KUBECONFIG=./k3s.yaml helm install istiod istio/istiod -n istio-system --wait
 ```
 
 ### 4. Kurulumun Doğrulanması
@@ -218,67 +173,43 @@ helm install istio-ingressgateway istio/gateway -n istio-ingress --wait
 Komutlar tamamlandıktan sonra, Istio'nun hem beyninin hem de kapısının sağlıklı bir şekilde ayağa kalktığını kontrol edin:
 
 ```bash
-kubectl get pods -A | grep istio
+KUBECONFIG=./k3s.yaml kubectl get pods -A | grep istio
 ```
 
-Çıktıda istiod ve istio-ingressgateway podlarının Running durumunda olduğunu görmelisiniz. Bu aşamadan sonra altyapınız, üzerine kurulacak olan mikroservislere otomatik olarak Envoy "Sidecar" (Koruma Kalkanı ve Yönlendirici) enjekte etmeye tamamen hazırdır.
+Çıktıda istiod ve istio-ingressgateway podlarının Running durumunda olduğunu görmelisiniz. Bu aşamadan sonra altyapınız, üzerine kurulacak olan mikroservislere otomatik olarak Envoy "Sidecar" enjekte etmeye tamamen hazırdır.
 
 
 ### Katman 5: Modern Gözlemlenebilirlik (Observability - VictoriaMetrics)
 
 Sistemin "MR" cihazı olarak, standart Prometheus altyapısından çok daha az kaynak tüketen ve daha yüksek performans sunan VictoriaMetrics kullanıyoruz. Bu bileşen, topladığı metrikleri kalıcı olarak saklamak için Rook-Ceph blok depolama birimini kullanacak şekilde yapılandırılmıştır.
 
-#### 1. VictoriaMetrics Klasörünün ve Chart'ının Hazırlanması
-
-Resmi paketleri yerel IaC klasör yapımıza indiriyoruz:
 
 ```bash
-mkdir -p stacks/stack-1/observability-victoriametrics
-cd stacks/stack-1/observability-victoriametrics
-```
-
-```bash
-helm repo add vm [https://victoriametrics.github.io/helm-charts](https://victoriametrics.github.io/helm-charts)
-helm repo update
-helm pull vm/victoria-metrics-single --untar
+KUBECONFIG=./k3s.yaml helm repo add vm [https://victoriametrics.github.io/helm-charts](https://victoriametrics.github.io/helm-charts)
 ```
 
 ### 2. Düşük Kaynaklı ve Ceph Uyumlu Yapılandırma
 
-Laboratuvar ortamındaki CPU/RAM kullanımını minimize eden ve verileri Ceph üzerinde saklayan `custom-values.yaml` dosyasını oluşturun:
-
-**`stacks/stack-1/observability-victoriametrics/custom-values.yaml` Dosya İçeriği:**
-
-```yaml
-server:
-  resources:
-    requests:
-      cpu: 10m
-      memory: 128Mi
-    limits:
-      memory: 256Mi
-  persistentVolume:
-    enabled: true
-    storageClassName: "rook-ceph-block" # Rook-Ceph Entegrasyonu
-    size: 5Gi
-```
+Laboratuvar ortamındaki CPU/RAM kullanımını minimize eden ve verileri Ceph üzerinde saklayan `custom-values.yaml` dosyasını burada  görebilirsiniz  `stacks/stack-1/observability-victoriametrics/custom-values.yaml`.
 
 ### 3. Kurulumun Başlatılması
 
 Gözlem araçları için izole bir alan oluşturup kurulumu gerçekleştiriyoruz:
 
 ```bash
-kubectl create namespace observability
+KUBECONFIG=./k3s.yaml kubectl create namespace observability
+```
 
-helm install vmetrics ./victoria-metrics-single -n observability -f custom-values.yaml --wait
+```bash
+KUBECONFIG=./k3s.yaml helm install vmetrics ./victoria-metrics-single -n observability -f stacks/stack-1/observability-victoriametrics/custom-values.yaml --wait
 ```
 
 ### 4. Kurulumun Doğrulanması
 
-Kurulumun ardından podun ve disk bağlantısının (PVC) durumunu kontrol edin:
+Kurulumun ardından podun ve disk bağlantısının durumunu kontrol edin:
 
 ```bash
-kubectl get pods,pvc -n observability
+KUBECONFIG=./k3s.yaml kubectl get pods,pvc -n observability
 ```
 
 Ekranda podun Running statüsünde olduğunu ve PVC'nin Bound (Rook-Ceph diskinin başarıyla bağlandığı) durumuna geçtiğini görmelisiniz. Artık altyapınız yüksek performanslı metrik toplama kapasitesine sahiptir.
@@ -286,126 +217,88 @@ Ekranda podun Running statüsünde olduğunu ve PVC'nin Bound (Rook-Ceph diskini
 
 ### Katman 6: Merkezi Log Toplama (Observability - Fluentd)
 
-Sistemdeki tüm K3s bileşenlerinin ve mikroservislerin (podların) ürettiği logları merkezi bir noktada toplamak, filtrelemek ve iletmek için bir log toplama ajanı olan Fluentd kullanıyoruz. Bu bileşen, her sunucuda bir adet çalışacak şekilde bir **DaemonSet** olarak yapılandırılmıştır.
-
-
-
-#### 1. Fluentd Klasörünün ve Chart'ının Hazırlanması
-
-Gerekli IaC dizinini oluşturup resmi paketleri yerel çalışma alanımıza indiriyoruz:
-
-```bash
-mkdir -p stacks/stack-1/observability-fluentd
-cd stacks/stack-1/observability-fluentd
-```
+Sistemdeki tüm K3s bileşenlerinin ve mikroservislerin ürettiği logları merkezi bir noktada toplamak, filtrelemek ve iletmek için bir log toplama ajanı olan Fluentd kullanıyoruz. Bu bileşen, her sunucuda bir adet çalışacak şekilde bir **DaemonSet** olarak yapılandırılmıştır.
 
 # Resmi depoyu ekleyin ve chart'ı yerel dizine indirin
 ```bash
-helm repo add fluent [https://fluent.github.io/helm-charts](https://fluent.github.io/helm-charts)
-helm repo update
-helm pull fluent/fluentd --untar
+KUBECONFIG=./k3s.yaml helm repo add fluent [https://fluent.github.io/helm-charts](https://fluent.github.io/helm-charts)
 ```
 
-### 2. Düşük Kaynaklı (Diyet) Yapılandırma
+### 2. Düşük Kaynaklı Yapılandırma
 
-Laboratuvar ortamındaki yoğun "kaynak rezervasyonu" (CPU/RAM requests) kısıtlamalarını aşmak için, Fluentd'nin kağıt üzerindeki taleplerini minimize eden `custom-values.yaml` dosyasını oluşturun:
+Laboratuvar ortamındaki yoğun "kaynak rezervasyonu" (CPU/RAM requests) kısıtlamalarını aşmak için, Fluentd'nin kağıt üzerindeki taleplerini minimize eden `custom-values.yaml` dosyasını `stacks/stack-1/observability-fluentd/custom-values.yaml` burada görebilirsiniz
 
-**`stacks/stack-1/observability-fluentd/custom-values.yaml` Dosya İçeriği:**
-
-```yaml
-kind: "DaemonSet"
-resources:
-  requests:
-    cpu: 10m
-    memory: 10Mi
-  limits:
-    memory: 256Mi
-```
 
 ### 3. Kurulumun Başlatılması
 
 Fluentd'yi mevcut observability namespace'i altına kuruyoruz:
 ```bash
-helm install fluentd ./fluentd -n observability -f custom-values.yaml --wait
+KUBECONFIG=./k3s.yaml helm install fluentd ./fluentd -n observability -f stacks/stack-1/observability-fluentd/custom-values.yaml --wait
 ```
 
 ### Katman 7: Dağıtık İzleme (Distributed Tracing - OpenTelemetry & Jaeger)
 
-Mikroservis mimarilerinde bir isteğin (request) servisler arasındaki yolculuğunu uçtan uca izlemek, nerede yavaşladığını veya hata verdiğini anında tespit etmek için dağıtık izleme (tracing) kullanılır. Bu işlem için endüstri standardı olan **OpenTelemetry** (istekleri toplayan ajan) ve **Jaeger** (bu istekleri görselleştiren dedektif) araçlarını birlikte kullanıyoruz.
+Mikroservis mimarilerinde bir isteğin (request) servisler arasındaki yolculuğunu uçtan uca izlemek, nerede yavaşladığını veya hata verdiğini anında tespit etmek için dağıtık izleme (tracing) kullanılır. Bu işlem için endüstri standardı olan **OpenTelemetry**  ve **Jaeger** araçlarını birlikte kullanıyoruz.
 
-**Önemli Not:** Local K3s laboratuvar ortamında zamanlayıcının (Scheduler) `Insufficient Memory` hatalarını aşmak için, her iki aracın da CPU ve RAM requests (rezerve edilen) değerleri sembolik seviyelere (`10Mi`) çekilerek optimize edilmiştir.
+**Önemli Not:** Local K3s laboratuvar ortamında zamanlayıcının `Insufficient Memory` hatalarını aşmak için, her iki aracın da CPU ve RAM requests  değerleri sembolik seviyelere çekilerek optimize edilmiştir.
 
-### 1. İzleme (Tracing) Klasörünün ve Chart'ların Hazırlanması
+### 1. İzleme Klasörünün ve Chart'ların Hazırlanması
 
 Resmi Helm depolarını ekleyip her iki aracın dosyalarını yerel IaC dizinimize indiriyoruz:
 
 ```bash
-mkdir -p stacks/stack-1/observability-tracing
-cd stacks/stack-1/observability-tracing
-
-helm repo add jaegertracing [https://jaegertracing.github.io/helm-charts](https://jaegertracing.github.io/helm-charts)
-helm repo add open-telemetry [https://open-telemetry.github.io/opentelemetry-helm-charts](https://open-telemetry.github.io/opentelemetry-helm-charts)
-helm repo update
-
-helm pull jaegertracing/jaeger --untar
-helm pull open-telemetry/opentelemetry-collector --untar
+KUBECONFIG=./k3s.yaml helm repo add jaegertracing [https://jaegertracing.github.io/helm-charts](https://jaegertracing.github.io/helm-charts)
+KUBECONFIG=./k3s.yaml helm repo add open-telemetry [https://open-telemetry.github.io/opentelemetry-helm-charts](https://open-telemetry.github.io/opentelemetry-helm-charts)
+KUBECONFIG=./k3s.yaml helm repo update
 ```
-### 2. Düşük Kaynaklı (Diyet) Yapılandırma Dosyaları
+
+### 2. Düşük Kaynaklı Yapılandırma Dosyaları
 stacks/stack-1/observability-tracing/jaeger-values.yaml ve stacks/stack-1/observability-tracing/otel-values.yaml dosyalarına ihtiyacımız var doğru şekilde yapılandırmak için. 
 
 ### 3. Kurulumun Başlatılması
 ```bash
-helm install jaeger stacks/stack-1/observability-tracing/jaeger -n observability -f stacks/stack-1/observability-tracing/jaeger-values.yaml --wait
+KUBECONFIG=./k3s.yaml helm install jaeger stacks/stack-1/observability-tracing/jaeger -n observability -f stacks/stack-1/observability-tracing/jaeger-values.yaml --wait
 
-helm install otel-collector stacks/stack-1/observability-tracing/opentelemetry-collector -n observability -f stacks/stack-1/observability-tracing/otel-values.yaml --wait
+KUBECONFIG=./k3s.yaml helm install otel-collector stacks/stack-1/observability-tracing/opentelemetry-collector -n observability -f stacks/stack-1/observability-tracing/otel-values.yaml --wait
 ```
 
 ### 4. Kurulumun Doğrulanması
 ```bash
-kubectl get pods -n observability | grep -E "jaeger|otel"
+KUBECONFIG=./k3s.yaml kubectl get pods -n observability | grep -E "jaeger|otel"
 ```
 Ekranda podların Running durumunda olduğunu görmelisiniz. Bu aşamadan sonra sisteminiz mikroservisler arası trafiği şeffaf bir şekilde izleme (tracing) yeteneğine kavuşmuştur.
 
 ## Katman 8: Çekirdek Seviyesi Güvenlik (Security - Falco)
 
-Sistemimizin en derin noktasında, Linux çekirdeği (kernel) seviyesinde anormallikleri tespit etmek için CNCF'nin endüstri standardı güvenlik aracı olan **Falco**'yu kullanıyoruz. 
+Sistemimizin en derin noktasında, Linux çekirdeği seviyesinde anormallikleri tespit etmek için CNCF'nin endüstri standardı güvenlik aracı olan **Falco**'yu kullanıyoruz. 
 
-Falco, **eBPF** teknolojisi ile sistem çağrılarını (*syscall*) dinleyerek aşağıdaki gibi kural dışı hareketleri anında tespit eder:
+Falco, **eBPF** teknolojisi ile sistem çağrılarını dinleyerek aşağıdaki gibi kural dışı hareketleri anında tespit eder:
 
 * Bir mikroservis podu içinde izinsiz terminal (shell) açılması
 * `/etc/shadow` gibi hassas sistem dosyalarına yetkisiz erişim sağlanması
 
-> 💡 **Önemli Not:** > Local **K3s** laboratuvar ortamında `Insufficient Memory` hatalarına takılmamak adına, diğer araçlarda olduğu gibi Falco'nun da kaynak talepleri (*requests*) optimize edilmiştir. Ayrıca, kernel ile haberleşmesi için en hafif ve güncel yöntem olan `modern_bpf` aktif hale getirilmiştir.
+> **Önemli Not:** > Local **K3s** laboratuvar ortamında `Insufficient Memory` hatalarına takılmamak adına, diğer araçlarda olduğu gibi Falco'nun da kaynak talepleri (*requests*) optimize edilmiştir. Ayrıca, kernel ile haberleşmesi için en hafif ve güncel yöntem olan `modern_bpf` aktif hale getirilmiştir.
 
 ### 1. Falco Klasörünün ve Chart'ının Hazırlanması
 
 Güvenlik katmanı için IaC dizinini oluşturup resmi paketleri indiriyoruz:
 
 ```bash
-mkdir -p stacks/stack-1/security-falco
-cd stacks/stack-1/security-falco
-```
-
-```bash
-helm repo add falcosecurity [https://falcosecurity.github.io/charts](https://falcosecurity.github.io/charts)
-helm repo update
-helm pull falcosecurity/falco --untar
+KUBECONFIG=./k3s.yaml helm repo add falcosecurity [https://falcosecurity.github.io/charts](https://falcosecurity.github.io/charts)
 ```
 ### 2. Kurulumun Başlatılması
 
-
 # Güvenlik için ayrı bir namespace oluşturun
 ```bash
-kubectl create namespace security
+KUBECONFIG=./k3s.yaml kubectl create namespace security
 ```
 
 # Falco'yu yerel dizindeki chart ve optimize edilmiş ayarlarımızla kurun
 ```bash
-helm install falco stacks/stack-1/security-falco/falco -n security -f stacks/stack-1/securi
+KUBECONFIG=./k3s.yaml helm install falco stacks/stack-1/security-falco/falco -n security -f stacks/stack-1/security-falco/custom-values.yaml
 ```
 ## Katman 9: Uygulama (Dapr, OpenFeature ve Mikroservisler)
-Katman 9 da Dapr kurulumu ve redis kurulumu kısmını atladım.
-
+Katman 9 da Dapr kurulumu ve redis kurulumu kısmının readmesini atladım.
 
 ## Katman 10: GitOps Otoyolu (Continuous Delivery - Flux)
 
@@ -438,7 +331,7 @@ KUBECONFIG=./k3s.yaml flux bootstrap github \
 ```
 ### 3. Altyapı Klasörünü (stack-1) Flux'a Tanıtma
 
-Flux'ın oluşturduğu klasörü bilgisayarınıza çekin (git pull). Ardından, mevcut stacks/stack-1 klasöründeki manifestoları yönetecek olan infrastructure.yaml Kustomization dosyasını görebilirsiniz clusters/k3s-lab/flux-system/infrastructure.yaml  burada .Flux'ın ana okuma listesine dahil ettiğini  clusters/k3s-lab/flux-system/kustomization.yaml en altındaki infrastructure.yaml dan görebilirsiniz.
+Flux'ın oluşturduğu klasörü bilgisayarınıza çekin. Ardından, mevcut stacks/stack-1 klasöründeki manifestoları yönetecek olan infrastructure.yaml Kustomization dosyasını görebilirsiniz clusters/k3s-lab/flux-system/infrastructure.yaml  burada .Flux'ın ana okuma listesine dahil ettiğini  clusters/k3s-lab/flux-system/kustomization.yaml en altındaki infrastructure.yaml dan görebilirsiniz.
 
 ### 4. Güvenli Liste (Whitelist) Oluşturma ve Devrimi Başlatma
 
@@ -452,32 +345,10 @@ git push
 Artık K3s kümeniz, stacks/stack-1/kustomization.yaml dosyasına eklediğiniz her şeyi Git üzerinden otomatik olarak kuracaktır.
 
 
-## Katman 11: P2P Container Registry (Dragonfly)
 
-Büyük ölçekli kümelerde yüzlerce podun aynı anda "image pull" (imaj çekme) isteği yapması ağı felç edebilir. Bu darboğazı çözmek için imajları Torrent benzeri bir Peer-to-Peer (P2P) mimarisiyle dağıtan **Dragonfly**'ı kullanıyoruz. Üstelik bu kurulumu manuel değil, doğrudan az önce kurduğumuz GitOps otoyolu üzerinden yapacağız.
+## Katman 11: Webhook ve Sertifika Yönetimi (Cert-Manager)
 
-
-
-### 1. Dragonfly GitOps Manifestosunu Hazırlama
-
-Düşük kaynak tüketimi için ayarlanmış ve Flux v2'nin kullandığı güncel `HelmRelease` API'sine (`v2beta2`) sahip dosyayı görebilirsiniz şurada stacks/stack-1/container-registry-dragonfly/dragonfly.yaml.
-
-### 2. Güvenli Listeye Ekleme ve Git'e Gönderme (Otonom Kurulum)
-
-Oluşturduğunuz bu dosyayı stacks/stack-1/kustomization.yaml dosyasının resources listesinde görebilirsiniz.
-
-
-### 3. Kurulumun Doğrulanması
-
-Flux deponuzu tarayıp kurulumu arka planda gerçekleştirecektir. Durumu izlemek için:
-
-```bash
-kubectl get pods -n dragonfly-system -w
-```
-
-## Katman 12: Webhook ve Sertifika Yönetimi (Cert-Manager)
-
-OpenFeature gibi gelişmiş Kubernetes operatörleri, podların içine ajan (*sidecar*) enjekte edebilmek için "Mutating Admission Webhook" kullanırlar. Bu webhook'ların Kubernetes API sunucusuyla güvenli (TLS) haberleşebilmesi için sisteme otomatik sertifika üretecek olan endüstri standardı **cert-manager** bileşenini GitOps üzerinden kuruyoruz.
+OpenFeature gibi gelişmiş Kubernetes operatörleri, podların içine ajan enjekte edebilmek için "Mutating Admission Webhook" kullanırlar. Bu webhook'ların Kubernetes API sunucusuyla güvenli  haberleşebilmesi için sisteme otomatik sertifika üretecek olan endüstri standardı **cert-manager** bileşenini GitOps üzerinden kuruyoruz.
 
 
 ### 1. Cert-Manager GitOps Manifestosunu Hazırlama
@@ -494,7 +365,7 @@ kubectl get pods -n cert-manager
 # Üç podun da (cert-manager, cainjector, webhook) Running durumunda olduğundan emin olun.
 ```
 
-## Katman 13: Dinamik Özellik Yönetimi (Feature Flagging - OpenFeature)
+## Katman 12: Dinamik Özellik Yönetimi (Feature Flagging - OpenFeature)
 
 Uygulama kodunu değiştirmeden, yeni bir Docker imajı almadan ve K3s podlarını yeniden başlatmadan (sıfır kesinti) yeni özellikleri canlı yayında açıp kapatabilmek için **OpenFeature** ve **flagd** kullanıyoruz.
 
