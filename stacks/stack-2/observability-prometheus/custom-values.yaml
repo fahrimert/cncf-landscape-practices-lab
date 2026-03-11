@@ -1,0 +1,10 @@
+alertmanager:
+  enabled: false # Şimdilik alarm sistemine gerek yok, kaynak tasarrufu yapalım.
+
+grafana:
+  adminPassword: "admin" # Grafana giriş şifremiz
+  ingress:
+    enabled: true
+    ingressClassName: nginx # Az önce kurduğumuz Nginx'i kullan!
+    hosts:
+      - grafana.local # Tarayıcıdan bu adresle gireceğiz
