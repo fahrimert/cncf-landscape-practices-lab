@@ -1,0 +1,54 @@
+---
+- name: Mikroservis İmajlarını Build Et (CRI-O / Podman)
+  hosts: k3s_nodes
+  become: yes
+  vars:
+    services:
+      - name: order-service
+        path: ../../apps/order-service
+      - name: inventory-service
+        path: ../../apps/inventory-service
+      - name: payment-service
+        path: ../../apps/payment-service
+
+  tasks:
+    - name: Podman kurulumu (CRI-O ile uyumlu imaj yönetimi için)
+      apt:
+        name: podman
+        state: present
+        update_cache: yes
+
+    - name: 1. Uzak sunucuda klasörleri temizle/hazırla
+      file:
+        path: "/opt/microservices/{{ item.name }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ services }}"
+
+    - name: 2. Yerelde paketle (node_modules HARİÇ)
+      shell: |
+        tar --exclude='node_modules' --exclude='.git' --exclude='__pycache__' --exclude='.venv' -czf /tmp/{{ item.name }}.tar.gz -C "{{ playbook_dir }}/{{ item.path }}" .
+      delegate_to: localhost
+      become: no
+      loop: "{{ services }}"
+
+    - name: 3. Arşivi karşıya yükle ve aç
+      unarchive:
+        src: "/tmp/{{ item.name }}.tar.gz"
+        dest: "/opt/microservices/{{ item.name }}"
+      loop: "{{ services }}"
+
+    - name: 4. Podman Image Build
+      shell: |
+        podman build -t {{ item.name }}:latest .
+      args:
+        chdir: "/opt/microservices/{{ item.name }}"
+      loop: "{{ services }}"
+
+    - name: 5. Yerel temizlik
+      file:
+        path: "/tmp/{{ item.name }}.tar.gz"
+        state: absent
+      delegate_to: localhost
+      become: no
+      loop: "{{ services }}"

@@ -1,0 +1,6 @@
+cluster:
+  enabled: false
+
+nats:
+  jetstream:
+    enabled: true

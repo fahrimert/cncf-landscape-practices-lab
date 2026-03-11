@@ -1,0 +1,74 @@
+---
+- name: Katman 0 - K3s Temizliği (Yıkım)
+  hosts: k3s_nodes
+  become: yes
+  tasks:
+- name: Katman 0 - CRI-O ve Çıplak K3s Kurulumu
+  hosts: k3s_nodes
+  become: yes
+  tasks:
+    - name: CRI-O Gerekli modüllerini yükle
+      shell: |
+        cat <<EOF | tee /etc/modules-load.d/crio.conf
+        overlay
+        br_netfilter
+        EOF
+        modprobe overlay
+        modprobe br_netfilter
+
+    - name: CRI-O Sysctl ayarlarını yap
+      shell: |
+        cat <<EOF | tee /etc/sysctl.d/99-kubernetes-cri.conf
+        net.bridge.bridge-nf-call-iptables  = 1
+        net.ipv4.ip_forward                 = 1
+        net.bridge.bridge-nf-call-ip6tables = 1
+        EOF
+        sysctl --system
+
+    - name: CRI-O Repository ve Paketlerini Kur (pkgs.k8s.io)
+      shell: |
+        rm -f /etc/apt/sources.list.d/projectatomic*.list
+        rm -f /etc/apt/sources.list.d/cri-o.list
+
+        apt-get update
+        apt-get install -y software-properties-common curl apt-transport-https ca-certificates gpg
+        mkdir -p /etc/apt/keyrings
+        
+        curl -fsSL https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.29/deb/Release.key | gpg --dearmor --yes -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.29/deb/ /" > /etc/apt/sources.list.d/cri-o.list      
+        
+        apt-get update
+        apt-get install -y cri-o
+        
+        systemctl daemon-reload
+        systemctl enable crio
+        systemctl start crio
+
+    - name: K3s yükleme scriptini indir ve çalıştır
+      shell: >
+        curl -sfL https://get.k3s.io | sh -s - server 
+        --tls-san 192.168.56.50
+        --disable traefik 
+        --disable servicelb 
+        --flannel-backend=none 
+        --disable-network-policy
+        --container-runtime-endpoint unix:///var/run/crio/crio.sock
+        --write-kubeconfig-mode 644
+
+    - name: Kubeconfig dosyasını host makineye çek
+      fetch:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: ../../k3s-stack2.yaml
+        flat: yes
+
+- name: Local Kubeconfig Ayarı
+  hosts: localhost
+  connection: local
+  vars:
+    ansible_python_interpreter: python3
+  tasks:
+    - name: IP adresini düzelt (127.0.0.1 -> 192.168.56.50)
+      replace:
+        path: ../../k3s-stack2.yaml
+        regexp: '127.0.0.1'
+        replace: '192.168.56.50'

@@ -4,3 +4,5 @@ node_modules/
 dist/
 .env
 k3s.yamltoken.txt
+k3s-stack2.yaml
+stacks/stack-2/.vagrant/

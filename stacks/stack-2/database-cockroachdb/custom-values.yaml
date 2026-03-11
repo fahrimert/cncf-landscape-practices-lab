@@ -1,0 +1,10 @@
+statefulset:
+  replicas: 1
+
+tls:
+  enabled: false
+
+storage:
+  persistentVolume:
+    size: 5Gi
+    storageClass: "longhorn"
