@@ -1,0 +1,8 @@
+# Kubernetes'e yeni sertifika kaynaklarını (CRD) öğret
+installCRDs: true
+
+# Opsiyonel: Prometheus ile metriklerini toplaması için
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true

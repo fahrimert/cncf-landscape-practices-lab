@@ -1,0 +1,14 @@
+gateway:
+  # Dışarıya açmıyoruz, Nginx arkasında kalacak
+  type: ClusterIP
+
+etcd:
+  # Laboratuvar ortamı için tek etcd kopyası yeterli
+  replicaCount: 1
+
+ingress-controller:
+  # APISIX'in Kubernetes Ingress kurallarını okuyabilmesi için
+  enabled: true
+  config:
+    apisix:
+      serviceNamespace: apisix

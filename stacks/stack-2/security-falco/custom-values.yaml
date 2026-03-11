@@ -1,0 +1,7 @@
+driver:
+  # Çekirdeği yormayan, modern eBPF izleme motoru
+  kind: ebpf
+
+falcosidekick:
+  # Alarm bildirimlerini şimdilik kapatıyoruz
+  enabled: false
