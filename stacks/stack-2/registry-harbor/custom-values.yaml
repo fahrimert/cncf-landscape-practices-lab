@@ -1,0 +1,29 @@
+expose:
+  type: ingress
+  tls:
+    enabled: false # Yerel ağda TLS hatalarını önlemek için kapalı
+  ingress:
+    hosts:
+      core: harbor.local # Tarayıcıdan bu adresle gireceğiz
+    className: nginx
+
+# Harbor'ın dışarıdan erişilebilir tam adresi
+externalURL: http://harbor.local:30080
+
+persistence:
+  persistentVolumeClaim:
+    registry:
+      storageClass: "longhorn"
+      size: 5Gi
+    jobservice:
+      storageClass: "longhorn"
+    database:
+      storageClass: "longhorn"
+    redis:
+      storageClass: "longhorn"
+
+# RAM tasarrufu için yan modülleri kapatıyoruz
+trivy:
+  enabled: false
+notary:
+  enabled: false
