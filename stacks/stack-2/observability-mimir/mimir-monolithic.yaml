@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability-mimir
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mimir-config
+  namespace: observability-mimir
+data:
+  mimir.yaml: |
+    multitenancy_enabled: false
+    target: all,alertmanager
+    blocks_storage:
+      backend: filesystem
+      filesystem:
+        dir: /data/mimir/blocks
+    compactor:
+      data_dir: /data/mimir/compactor
+    ingester:
+      ring:
+        kvstore:
+          store: inmemory
+        replication_factor: 1
+    store_gateway:
+      sharding_ring:
+        replication_factor: 1
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mimir
+  namespace: observability-mimir
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mimir
+  serviceName: mimir
+  template:
+    metadata:
+      labels:
+        app: mimir
+    spec:
+      containers:
+      - name: mimir
+        image: grafana/mimir:2.11.0
+        args:
+        - "-config.file=/etc/mimir/mimir.yaml"
+        ports:
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /etc/mimir
+        - name: storage
+          mountPath: /data
+      # EKSİK OLAN KISIM BURASIYDI:
+      volumes:
+      - name: config
+        configMap:
+          name: mimir-config
+  volumeClaimTemplates:
+  - metadata:
+      name: storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "longhorn"
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mimir
+  namespace: observability-mimir
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  selector:
+    app: mimir
