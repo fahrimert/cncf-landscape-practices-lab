@@ -1,0 +1,6 @@
+# KubeVela Çekirdek Ayarları
+admissionWebhooks:
+  # Geliştiricinin yazdığı Application dosyalarını kontrol eden mekanizma
+  enabled: true
+  certificate:
+    method: cert-manager # Harika! Az önce kurduğumuz Cert-Manager'ı kullanacak.

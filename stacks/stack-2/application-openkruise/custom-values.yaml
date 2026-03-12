@@ -1,0 +1,6 @@
+# Laboratuvar ortamı için tek kopya yönetici (manager)
+manager:
+  replicas: 1
+  
+# İsteğe bağlı olarak gelişmiş özellikleri açıyoruz
+featureGates: "CloneSetShortHash=true,KruiseDaemon=true"

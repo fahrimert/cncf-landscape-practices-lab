@@ -1,5 +1,0 @@
-# Istio'nun küresel ağ ayarları
-meshConfig:
-  accessLogFile: /dev/stdout # Trafik loglarını görmek için açıyoruz
-  outboundTrafficPolicy:
-    mode: ALLOW_ANY # Şimdilik dış dünyaya çıkış serbest olsun
