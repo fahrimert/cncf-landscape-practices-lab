@@ -1,0 +1,19 @@
+# Her Node'a bir ajan kur (DaemonSet)
+kind: "DaemonSet"
+
+fileConfigs:
+  01_sources.conf: |-
+    <source>
+      @type tail
+      path /var/log/containers/*.log
+      pos_file /var/log/fluentd-containers.log.pos
+      tag kubernetes.*
+      read_from_head true
+      <parse>
+        @type cri # CRI-O log formatını okuması için özel parse kuralı!
+      </parse>
+    </source>
+  02_output.conf: |-
+    <match kubernetes.**>
+      @type stdout # Laboratuvar ortamı için logları ekrana basıyoruz
+    </match>
